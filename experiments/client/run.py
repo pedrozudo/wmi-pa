@@ -2,6 +2,8 @@ from __future__ import print_function, division
 
 import json
 import argparse
+
+import os
 import pysmt.shortcuts as smt
 
 from sys import path
@@ -13,6 +15,9 @@ path.insert(0, "../../src/")
 import problem
 import parse
 from wmi import WMI
+
+
+print(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), "src")
 
 
 def substitute_special_names(nested_string):
