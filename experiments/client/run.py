@@ -25,15 +25,12 @@ def convert(nested_string):
     return parse.nested_to_smt(substitute_special_names(nested_string))
 
 
-def run(filename):
+def run(flat):
     """
 
-    :param filename: The filename containing the problem, queries and weight function
+    :param flat: A dict containing the string encoded domain, query / queries and optional formula and weight function
     :return:
     """
-    with open(filename) as f:
-        flat = json.load(f)
-
     domain = problem.import_domain(flat["domain"])
 
     if "formula" in flat:
@@ -66,6 +63,15 @@ def run(filename):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("filename")
+    parser.add_argument("-f", "--filename", default=None)
+    parser.add_argument("-s", "--json_string", default=None)
+
     args = parser.parse_args()
-    run(args.filename)
+    if args.filename is not None:
+        with open(args.filename) as f:
+            flat = json.load(f)
+    elif args.json_string is not None:
+        flat = json.loads(args.json_string)
+    else:
+        raise RuntimeError("No input provided")
+    run(flat)
