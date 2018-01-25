@@ -9,15 +9,11 @@ import pysmt.shortcuts as smt
 from sys import path
 
 import re
-
-path.insert(0, "../../src/")
-
 import problem
 import parse
+
+path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "src"))
 from wmi import WMI
-
-
-print(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), "src")
 
 
 def substitute_special_names(nested_string):
