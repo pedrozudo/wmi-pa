@@ -26,6 +26,12 @@ def convert(nested_string):
 
 
 def compute_wmi(domain, queries, formula=None, weight_function=None):
+    if formula is None:
+        formula = smt.TRUE()
+
+    if weight_function is None:
+        weight_function = smt.Real(1.0)
+
     support = []
     for v in domain.real_vars:
         lb, ub = domain.var_domains[v]
