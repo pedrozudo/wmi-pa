@@ -4,6 +4,10 @@ import json
 import argparse
 
 import os
+import random
+import string
+
+import math
 import pysmt.shortcuts as smt
 
 from sys import path
@@ -25,12 +29,36 @@ def convert(nested_string):
     return parse.nested_to_smt(substitute_special_names(str(nested_string)))
 
 
+def clean(domain, queries, formula, weight_function):
+    mapping = dict()
+    names = set()
+    n = max(2, math.ceil(len(domain.variables) / len(string.ascii_lowercase)))
+    for var in domain.variables:
+        new_name = None
+        while new_name is None or new_name in names or new_name == "pi":
+            new_name = ''.join(random.choice(string.ascii_lowercase) for _ in range(n))
+        names.add(new_name)
+        mapping[var] = new_name
+    adapted_domain = problem.Domain(
+        [mapping[v] for v in domain.variables],
+        {mapping[v]: domain.var_types[v] for v in domain.var_types.keys()},
+        {mapping[v]: domain.var_domains[v] for v in domain.var_domains.keys()},
+    )
+    substitution = {domain.get_symbol(v): adapted_domain.get_symbol(mapping[v]) for v in domain.variables}
+    adapted_queries = [smt.substitute(query, substitution) for query in queries ]
+    adapted_formula = smt.substitute(formula, substitution)
+    adapted_weight_function = smt.substitute(weight_function, substitution)
+    return adapted_domain, adapted_queries, adapted_formula, adapted_weight_function
+
+
 def compute_wmi(domain, queries, formula=None, weight_function=None):
     if formula is None:
         formula = smt.TRUE()
 
     if weight_function is None:
         weight_function = smt.Real(1.0)
+
+    domain, queries, formula, weight_function = clean(domain, queries, formula, weight_function)
 
     support = []
     for v in domain.real_vars:
@@ -41,9 +69,10 @@ def compute_wmi(domain, queries, formula=None, weight_function=None):
     formula = smt.simplify(smt.And(formula, *support))
 
     wmi = WMI()
-    total_volume, _ = wmi.compute(formula, weight_function, WMI.MODE_PA)
+    bool_symbols = [domain.get_symbol(v) for v in domain.bool_vars]
+    total_volume, _ = wmi.compute(formula, weight_function, WMI.MODE_PA, bool_symbols)
     for query in queries:
-        query_volume, _ = wmi.compute(formula & query, weight_function, WMI.MODE_PA)
+        query_volume, _ = wmi.compute(formula & query, weight_function, WMI.MODE_PA, bool_symbols)
         yield query_volume / total_volume
 
 

@@ -10,6 +10,7 @@ Currently, three algorithms are supported:
         integrals computed.
 
 """
+from math import fsum
 
 __version__ = '0.999'
 __author__ = 'Paolo Morettin'
@@ -422,7 +423,7 @@ class WMI:
     def _parallel_volume_computation(self, latte_problems):
         pool = Pool(self.n_threads)
         integrate_alias = partial(integrate_worker, self)
-        volume = sum(pool.map(integrate_alias, latte_problems))
+        volume = fsum(pool.map(integrate_alias, latte_problems))
         pool.close()
         pool.join()
         return volume
