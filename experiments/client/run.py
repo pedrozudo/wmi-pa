@@ -29,22 +29,25 @@ def convert(nested_string):
     return parse.nested_to_smt(substitute_special_names(str(nested_string)))
 
 
-def clean(domain, queries, formula, weight_function):
+def clean(symbols, domain, queries, formula, weight_function):
     mapping = dict()
     names = set()
-    n = max(2, math.ceil(len(domain.variables) / len(string.ascii_lowercase)))
+
+    n = max(2, int(math.ceil(len(domain.variables) / len(string.ascii_lowercase))))
     for var in domain.variables:
         new_name = None
         while new_name is None or new_name in names or new_name == "pi":
             new_name = ''.join(random.choice(string.ascii_lowercase) for _ in range(n))
         names.add(new_name)
         mapping[var] = new_name
+
     adapted_domain = problem.Domain(
         [mapping[v] for v in domain.variables],
         {mapping[v]: domain.var_types[v] for v in domain.var_types.keys()},
         {mapping[v]: domain.var_domains[v] for v in domain.var_domains.keys()},
     )
-    substitution = {domain.get_symbol(v): adapted_domain.get_symbol(mapping[v]) for v in domain.variables}
+
+    substitution = {symbols[v]: adapted_domain.get_symbol(mapping[v]) for v in domain.variables}
     adapted_queries = [smt.substitute(query, substitution) for query in queries ]
     adapted_formula = smt.substitute(formula, substitution)
     adapted_weight_function = smt.substitute(weight_function, substitution)
@@ -58,7 +61,9 @@ def compute_wmi(domain, queries, formula=None, weight_function=None):
     if weight_function is None:
         weight_function = smt.Real(1.0)
 
-    domain, queries, formula, weight_function = clean(domain, queries, formula, weight_function)
+    symbols = {v: domain.get_symbol(v) for v in domain.variables}
+
+    domain, queries, formula, weight_function = clean(symbols, domain, queries, formula, weight_function)
 
     support = []
     for v in domain.real_vars:
