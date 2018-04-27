@@ -63,7 +63,7 @@ def compute_wmi(domain, queries, formula=None, weight_function=None):
     support = []
     for v in domain.real_vars:
         lb, ub = domain.var_domains[v]
-        sym = smt.Symbol(substitute_special_names(v), domain.var_types[v])
+        sym = domain.get_symbol(v)
         support.append(lb <= sym)
         support.append(sym <= ub)
     formula = smt.simplify(smt.And(formula, *support))
