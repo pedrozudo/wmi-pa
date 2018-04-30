@@ -18,6 +18,9 @@ import parse
 
 path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "src"))
 from wmi import WMI
+import wmiinference
+from weights import Weights
+from wmiinference import WMIInference
 
 
 def substitute_special_names(nested_string):
@@ -73,12 +76,16 @@ def compute_wmi(domain, queries, formula=None, weight_function=None):
         support.append(sym <= ub)
     formula = smt.simplify(smt.And(formula, *support))
 
-    wmi = WMI()
-    bool_symbols = [domain.get_symbol(v) for v in domain.bool_vars]
-    total_volume, _ = wmi.compute(formula, weight_function, WMI.MODE_PA, bool_symbols)
+    # wmi = WMI()
+    engine = WMIInference(formula, weight_function)
+
+    # weights = Weights(weight_function)
+    # bool_symbols = [domain.get_symbol(v) for v in domain.bool_vars]
+    # total_volume, _ = wmi.compute(formula, weight_function, WMI.MODE_PA, set(bool_symbols))
     for query in queries:
-        query_volume, _ = wmi.compute(formula & query, weight_function, WMI.MODE_PA, bool_symbols)
-        yield query_volume / total_volume
+        # query_volume, _ = wmi.compute(formula & query, weight_function, WMI.MODE_PA, bool_symbols)
+        # yield query_volume / total_volume
+        yield engine.compute_normalized_probability(query)
 
 
 def run(flat):
@@ -87,6 +94,7 @@ def run(flat):
     :param flat: A dict containing the string encoded domain, query / queries and optional formula and weight function
     :return:
     """
+
     domain = problem.import_domain(flat["domain"])
 
     if "formula" in flat:
